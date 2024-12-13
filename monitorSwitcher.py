@@ -1,5 +1,4 @@
 import os
-import json
 import platform
 import subprocess
 from PyQt5.QtWidgets import (
@@ -9,12 +8,11 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtGui import QIcon
 from PyQt5.QtCore import Qt
 import keyboard
+import json
 
-# Constants
 PROFILES_DIR = "monitor_profiles"
 MULTIMONITOR_TOOL = "MultiMonitorTool.exe"
 
-# Ensure profiles directory exists
 if not os.path.exists(PROFILES_DIR):
     os.makedirs(PROFILES_DIR)
 
@@ -84,9 +82,16 @@ class MonitorManager(QMainWindow):
         profile_path, _ = QFileDialog.getOpenFileName(self, "Load Profile", PROFILES_DIR, "Profiles (*.dat)")
         if profile_path:
             command = f"{MULTIMONITOR_TOOL} /LoadConfig \"{profile_path}\""
+            print(f"Executing command: {command}")
+
             if platform.system() == "Windows" and os.path.exists(MULTIMONITOR_TOOL):
-                subprocess.run(command, shell=True)
-                self.status_label.setText(f"Status: Profile loaded from '{profile_path}'.")
+                result = subprocess.run(command, shell=True, capture_output=True, text=True)
+                
+                if result.returncode != 0:
+                    print(f"Error: {result.stderr}")
+                    self.status_label.setText(f"Error loading profile from '{profile_path}'.")
+                else:
+                    self.status_label.setText(f"Status: Profile loaded from '{profile_path}'.")
             else:
                 self.status_label.setText("Status: MultiMonitorTool not found.")
 
